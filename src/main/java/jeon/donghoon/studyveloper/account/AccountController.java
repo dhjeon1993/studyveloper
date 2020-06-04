@@ -19,8 +19,7 @@ import javax.validation.Valid;
 public class AccountController {
 
     private final SignUpFormValidator signUpFormValidator;
-    private final AccountRepository accountRepository;
-    private final JavaMailSender javaMailSender;
+    private final AccountService accountService;
 
     @InitBinder("signUpForm") // 타입과 매칭
     public void initBinder(WebDataBinder webDataBinder) {
@@ -41,28 +40,7 @@ public class AccountController {
             return "account/sign-up";
         }
 
-
-        Account account = Account.builder()
-                .email(signUpForm.getEmail())
-                .nickname(signUpForm.getNickname())
-                .password(signUpForm.getPassword()) // TODO :: 인코딩 필요
-                .studyCreatedByWeb(true)
-                .studyEnrollmentResultByEmail(true)
-                .studyUpdatedByEmail(true)
-                .studyEnrollmentResultByWeb(true)
-                .studyUpdatedByWeb(true)
-                .build();
-
-        Account newAccount = accountRepository.save(account);
-
-        newAccount.generateEmailCheckToken();
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setSubject("스터디벨로퍼, 회원 가입 인증");
-        mailMessage.setTo(newAccount.getEmail());
-        mailMessage.setText("/check-email-token?token="+newAccount.getEmailCheckToken() + "&email=" +
-                newAccount.getEmail());
-
-        javaMailSender.send(mailMessage);
+        accountService.processNewAccount(signUpForm);
 
         return "redirect:/";
     }
